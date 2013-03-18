@@ -642,6 +642,26 @@ function validateActivationToken($token,$lostpass=NULL)
 //Functions that interact mainly with .checklist table
 //------------------------------------------------------------------------------
 
+function array_merge_recursive_distinct ( array &$array1, array &$array2 )
+{
+  $merged = $array1;
+
+  foreach ( $array2 as $key => &$value )
+  {
+    if ( is_array ( $value ) && isset ( $merged [$key] ) && is_array ( $merged [$key] ) )
+    {
+      $merged [$key] = array_merge_recursive_distinct ( $merged [$key], $value );
+    }
+    else
+    {
+		if(!in_array($value, $merged))
+			$merged[] = $value;
+    }
+  }
+
+  return $merged;
+}
+
 function addChecklist($user_id, $activity){
 	global $mysqli,$db_table_prefix; 
 	$stmt = $mysqli->prepare("INSERT INTO ".$db_table_prefix."checklist (
@@ -661,6 +681,23 @@ function addChecklist($user_id, $activity){
 
 function updateChecklist($activity_id, $check){
 	global $mysqli,$db_table_prefix; 
+	
+	$tmp = fetchChecklist($activity_id);
+	$tmp = json_decode($tmp['check'], true);
+	if(!empty($tmp)){
+		$final = array_merge_recursive_distinct($tmp, json_decode($check, true));
+	} else {
+		$final = json_decode($check, true);
+	}
+	
+	$stmt = $mysqli->prepare("UPDATE ".$db_table_prefix."checklist
+		SET `check` = ?
+		WHERE
+		`id` = ?");
+	$stmt->bind_param("si", json_encode($final), $activity_id);
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;
 }
 
 function fetchChecklist($activity_id){

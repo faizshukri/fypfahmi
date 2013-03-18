@@ -175,7 +175,15 @@ require_once("models/header.php");
 	}
 	
 	function openCal(activity_id){
-		$('#fancydata').html('Calendar checklist for activity '+activity_id+' will be added here.');
+		
+		$.ajax({
+			url: 'calendar_checklist.php',
+			type: 'get',
+			data: {activity_id: activity_id}
+		}).done(function(data){
+			$('#fancydata').html(data);
+		});
+		
 		$('a#inline').click();
 	}
 </script>
