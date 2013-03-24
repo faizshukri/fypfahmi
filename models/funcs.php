@@ -1663,7 +1663,7 @@ function getUserByPlace($ipt_id = false, $state_id = false, $zone_id = false){
 		$states_id = trim($states_id, ",");
 		$sql .= " AND ipt.state_id IN(".$states_id.")";
 	}
-	$sql .= " GROUP BY edu.user_id ORDER BY biodata.fullname ASC";
+	$sql .= " AND edu.`year` = (SELECT max(edu2.`year`) FROM uc_user_education edu2 WHERE edu2.user_id = edu.user_id ) GROUP BY edu.user_id";
 	$stmt = $mysqli->prepare($sql);
 	$stmt->execute();
 	$stmt->bind_result($fullname, $contact, $email, $ipt, $state, $year);
