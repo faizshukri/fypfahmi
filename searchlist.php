@@ -1,47 +1,11 @@
 <?php
-
 require_once("models/config.php");
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 
-//Form is submit
-if(!empty($_POST)){
-	$errors = array();
-	$user_data = array(
-		'fullname' => trim($_POST["fullname"]),
-		'ic_no' => trim($_POST["ic_no"]),
-		'dob' => trim($_POST["dob"]),
-		'email' => trim($_POST["email"]),
-		'no_phone' => trim($_POST["no_phone"]),
-		'address' => trim($_POST["address"]),
-		'city' => trim($_POST["city"]),
-		'state' => trim($_POST["state"])
-	);
-	
-	//End data validation
-	if(count($errors) == 0){
-		if(updateUserData($loggedInUser->user_id, 'user_biodata', json_encode($user_data)))
-			$successes[] = 'User profile has been saved.';
-		else
-			$errors[] = 'There an error to save your data. Please try again.';
-	}
-}
 
-$data = fetchUserData($loggedInUser->user_id, 'user_biodata');
-if(!$data){
-	$data = array(
-		'fullname' => '',
-		'ic_no' => '',
-		'dob' => '',
-		'email' => '',
-		'no_phone' => '',
-		'address' => '',
-		'city' => '',
-		'state' => ''
-	);
-} else {
-	$data = json_decode($data['content'], true);
-}
+$lists = getAllList();
 
+//debug($perm_list);
 require_once("models/header.php"); 
 
 ?>
@@ -53,27 +17,118 @@ require_once("models/header.php");
 
 	<div class="span9">
 		<?php echo resultBlock($errors,$successes); ?>
-		
+
 <div id='regbox'>
-<form name='newUser' action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post'>
+<form name='newUser' action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post' class="form-inline">
+<div id="selectContainer">
+<select class="init" id="zones">
+	<option value="">Please select Zone</option>
+	<?php foreach($lists['zones'] as $index => $zone){ ?>
+	<option value="<?php echo $index; ?>"><?php echo $zone; ?></option>
+	<?php } ?>
+</select>
 
+<select class="init" id="states">
+	<option value="">Please select State</option>
+	<?php foreach($lists['states'] as $index => $state){ ?>
+	<option value="<?php echo $index; ?>"><?php echo $state; ?></option>
+	<?php } ?>
+</select>
 
-<div class="form-actions">
-	<button type="submit" class="btn btn-primary">Save</button>
+<select class="init" id="ipt">
+	<option value="">Please select IPT</option>
+	<?php foreach($lists['ipt'] as $index => $ipt){ ?>
+	<option value="<?php echo $index; ?>"><?php echo $ipt; ?></option>
+	<?php } ?>
+</select>
+<button class="btn btn-primary" id="btnReset">Reset</button>
 </div>
+
+
+
+<p>
+<label>&nbsp;<br>
+<input class="btn btn-primary" type='submit' value='Register'/>
+</p>
+
 </form>
-		
-		
-	</div>
-  </div>
-  <div id='bottom'></div>
+</div>
+
+</div>
+<div id='bottom'></div>
 </div>
 </div>
 <script type="text/javascript">
 	jQuery(document).ready(function($){
 		$('.nav-left li').removeClass('active');
-		$('.nav-left .membership').addClass('active');
+		$('.nav-left .searchlist').addClass('active');
+		
+		$('#zones').change(function(){
+			changeZone();
+		});
+		
+		$('#btnReset').click(function(){
+			$('#zones').val('');
+			changeZone();
+			return false;
+		});
+		
+		changeState();
+		changeListTable();
+		
+		
 	});
+	
+	function changeZone(){
+		
+		$.ajax({
+			url: 'searchlist_ajax.php',
+			data: { zone_id: $('#zones').val() },
+			type: 'GET'
+		}).done(function(data){
+			console.log(data);
+			var thisparent = $('#states').parent();
+			$('#states').remove();
+			$('#ipt').remove();
+			thisparent.find('#zones').after(' '+data);
+			changeState();
+			changeListTable();
+		});
+	}
+	
+	function changeState(){
+		$('#states').change(function(){
+			$.ajax({
+				url: 'searchlist_ajax.php',
+				data: { state_id: $('#states').val(), zone_id: $('#zones').val() },
+				type: 'GET'
+			}).done(function(data){
+				console.log(data);
+				var thisparent = $('#states').parent();
+				$('#ipt').remove();
+				thisparent.find('#states').after(' '+data);
+				changeListTable();
+			});
+		});
+	}
+	
+	function changeListTable(){
+		$('#selectContainer select').each(function(){
+			$(this).change(function(){
+			
+				$.ajax({
+					url: 'searchlist_ajax_table.php',
+					data: { state_id: $('#states').val(), zone_id: $('#zones').val(), ipt_id: $('#ipt').val() },
+					type: 'GET'
+				}).done(function(data){
+					console.log(data);
+				});
+				
+			});
+		});
+		
+	}
+	
 </script>
 </body>
 </html>
