@@ -2,60 +2,143 @@
 
 require_once("models/config.php");
 if (!securePage($_SERVER['PHP_SELF'])){die();}
-
 //Form is submit
 if(!empty($_POST)){
+	// echo 'post';
+	// debug($_POST);
+	$tmpprischool = (isset($_POST['prischool']['new']) && !empty($_POST['prischool']['new']))?$_POST['prischool']['new']:array();
+	$tmppriyearend = (isset($_POST['priyearend']['new']) && !empty($_POST['priyearend']['new']))?$_POST['priyearend']['new']:array();
+	
+	$tmpsecschool = (isset($_POST['secschool']['new']) && !empty($_POST['secschool']['new']))?$_POST['secschool']['new']:array();
+	$tmpsecyearend = (isset($_POST['secyearend']['new']) && !empty($_POST['secyearend']['new']))?$_POST['secyearend']['new']:array();
+	
+	$tmphigschool = (isset($_POST['higschool']['new']) && !empty($_POST['higschool']['new']))?$_POST['higschool']['new']:array();
+	$tmphigyearend = (isset($_POST['higyearend']['new']) && !empty($_POST['higyearend']['new']))?$_POST['higyearend']['new']:array();
+	$tmphigcourse = (isset($_POST['higcourse']['new']) && !empty($_POST['higcourse']['new']))?$_POST['higcourse']['new']:array();
+	
+	
+	$newContent = array();
+	foreach($tmpprischool as $id => $value){
+		$newContent['Primary'][$id][$tmppriyearend[$id]] = $value;
+	}
+	foreach($tmpsecschool as $id => $value){
+		$newContent['Secondary'][$id][$tmpsecyearend[$id]] = $value;
+	}
+	foreach($tmphigschool as $id => $value){
+		$newContent['Higher'][$id][$tmphigcourse[$id]][$tmphigyearend[$id]] = $value;
+	}
 
-	$prischool = $_POST['prischool'];
-	$secschool = $_POST['secschool'];
-	$higschool = $_POST['higschool'];
-	
-	foreach($_POST['priyearend'] as $index => $year){
-		$prischool[$prischool[$index]] = $year;
-		unset($prischool[$index]);
+	unset($_POST['prischool']['new']);
+	unset($_POST['priyearend']['new']);
+	unset($_POST['secschool']['new']);
+	unset($_POST['secyearend']['new']);
+	unset($_POST['higschool']['new']);
+	unset($_POST['higyearend']['new']);
+	unset($_POST['higcourse']['new']);
+
+	$edus = array();
+	foreach($_POST['prischool'] as $id => $value){
+		$edus['Primary'][$id][$_POST['priyearend'][$id]] = $value;
 	}
-	
-	foreach($_POST['secyearend'] as $index => $year){
-		$secschool[$secschool[$index]] = $year;
-		unset($secschool[$index]);
+	foreach($_POST['secschool'] as $id => $value){
+		$edus['Secondary'][$id][$_POST['secyearend'][$id]] = $value;
 	}
-	
-	foreach($_POST['higyearend'] as $index => $year){
-		$course = $_POST['higcourse'];
-		$higschool[$higschool[$index]] = array(
-			'year' => $year,
-			'course' => $course[$index]
-		);
-		unset($higschool[$index]);
+	foreach($_POST['higschool'] as $id => $value){
+		$edus['Higher'][$id][$_POST['higcourse'][$id]][$_POST['higyearend'][$id]] = $value;
 	}
-	
-	$education = array(
-		'primary' => $prischool,
-		'secondary' => $secschool,
-		'high' => $higschool
-	);
+
 	
 	$errors = array();
+	$successes = array();
+	//Insert
+	foreach($newContent as $type => $content){
+		if(!empty($content) && ($type == 'Primary' || $type == 'Secondary')){
+			foreach($content as $index => $edu_array){
+				if(!empty($edu_array))
+				foreach($edu_array as $year => $place){
+					if(!updateEducation(null, array('type'=>$type, 'edu_place'=>$place, 'year' => $year , 'course' => '', 'user_id' => $loggedInUser->user_id)))
+						$errors[] = 'Error';
+				}
+			}
+		}
+		
+		if(!empty($content) && $type == 'Higher'){
+			foreach($content as $index => $edu_array){
+				if(!empty($edu_array))
+				foreach($edu_array as $course => $year_array){
+					foreach($year_array as $year => $place){
+						if(!updateEducation(null, array('type'=>$type, 'edu_place'=>$place, 'year' => $year , 'course' => $course, 'user_id' => $loggedInUser->user_id)))
+							$errors[] = 'Error';
+					}
+				}
+			}
+		}
+	}
 	
+	//Update
+	foreach($edus as $type => $content){
+		if(!empty($content) && ($type == 'Primary' || $type == 'Secondary')){
+			foreach($content as $id => $edu_array){
+				if(!empty($edu_array))
+				foreach($edu_array as $year => $place){
+					if(!updateEducation($id, array('type'=>$type, 'edu_place'=>$place, 'year' => $year , 'course' => '', 'user_id' => $loggedInUser->user_id)))
+						$errors[] = 'Error';
+				}
+			}
+		}
+		
+		if(!empty($content) && $type == 'Higher'){
+			foreach($content as $id => $edu_array){
+				if(!empty($edu_array))
+				foreach($edu_array as $course => $year_array){
+					foreach($year_array as $year => $place){
+						if(!updateEducation($id, array('type'=>$type, 'edu_place'=>$place, 'year' => $year , 'course' => $course, 'user_id' => $loggedInUser->user_id)))
+							$errors[] = 'Error';
+					}
+				}
+			}
+		}
+	}
+
 	//End data validation
 	if(count($errors) == 0){
-		if(updateUserData($loggedInUser->user_id, 'user_education', json_encode($education)))
-			$successes[] = 'User profile has been saved.';
-		else
-			$errors[] = 'There an error to save your data. Please try again.';
+		$successes[] = 'User profile has been saved.';
+	} else {
+		$errors[] = 'There an error to save your data. Please try again.';
 	}
 }
 
-$data = fetchUserData($loggedInUser->user_id, 'user_education');
+$data = false;
+$data2 = getEducation(null, $loggedInUser->user_id);
+$ipts = getAllIpt();
+
+//debug($data2);
+//die();
+
+if(!empty($data2)){
+	foreach($data2 as $index => $tmp){
+		
+	
+		if($tmp['type'] == 'Higher'){
+			$data[$tmp['type']][$tmp['id']][$tmp['course']] = array($tmp['year'] => $tmp['edu_place']);
+		} else {
+			$data[$tmp['type']][$tmp['id']] = array($tmp['year'] => $tmp['edu_place']);
+		}
+		
+	}	
+}
+
+//debug($data);
+
 if(!$data){
 	$data = array(
-		'primary' => array(
+		'Primary' => array(
 			'' => ''
 		),
-		'secondary' => array(
+		'Secondary' => array(
 			'' => ''
 		),
-		'high' => array(
+		'Higher' => array(
 			'' => array(
 				'year' => '',
 				'course' => ''
@@ -63,7 +146,9 @@ if(!$data){
 		)
 	);
 } else {
-	$data = json_decode($data['content'], true);
+	//if(!isset($data['Primary'])) $data['Primary'] = array('');
+	//if(!isset($data['Secondary'])) $data['Secondary'] = array('');
+	//if(!isset($data['Higher'])) $data['Higher'] = array('');
 }
 //debug($data);
 require_once("models/header.php"); 
@@ -93,30 +178,32 @@ require_once("models/header.php");
 	<td>
 	<label class="control-label">Year End</label>
 	<div class="controls">
-		<input disabled name="priyearend[]" type="text" placeholder="Year End">
+		<input disabled name="priyearend[new][]" type="text" placeholder="Year End">
 		<button class="btn-close btn btn-small btn-danger">X</button>
 	</div>
 	</td>
 	</tr>
 	<?php 
 	$count = 1;
-	foreach($data['primary'] as $index => $primary){ ?>
-	<tr>
-	<td>
-	<?php echo ($count == 1) ? '<label class="control-label" for="prischool">Primary School</label>': ''; ?>
-	<div class="controls">
-		<input name="prischool[]" type="text" <?php echo ($count == 1) ? 'id="prischool"':''; ?> placeholder="Primary School" value="<?php echo $index; ?>" />
-	</div>
-	</td>
-	<td>
-	<label class="control-label">Year End</label>
-	<div class="controls">
-		<input name="priyearend[]" type="text" placeholder="Year End" value="<?php echo $primary; ?>">
-		<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
-	</div>
-	</td>
-	</tr>
-	<?php ++$count; } ?>
+	foreach($data['Primary'] as $index => $primary){ 
+	
+		foreach($primary as $year => $place){ ?>
+		<tr>
+		<td>
+		<?php echo ($count == 1) ? '<label class="control-label" for="prischool">Primary School</label>': ''; ?>
+		<div class="controls">
+			<input name="prischool[<?php echo $index; ?>]" type="text" <?php echo ($count == 1) ? 'id="prischool"':''; ?> placeholder="Primary School" value="<?php echo $place; ?>" />
+		</div>
+		</td>
+		<td>
+		<label class="control-label">Year End</label>
+		<div class="controls">
+			<input name="priyearend[<?php echo $index; ?>]" type="text" placeholder="Year End" value="<?php echo $year; ?>">
+			<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
+		</div>
+		</td>
+		</tr>
+	<?php } ++$count;  } ?>
 	</table>
 	<p>&nbsp;</p>
 	<div class="controls">
@@ -133,37 +220,38 @@ require_once("models/header.php");
 	<tr id="samplesecschool" style="display: none;">
 	<td>
 	<div class="controls">
-		<input disabled name="secschool[]" type="text" placeholder="Secondary School">
+		<input disabled name="secschool[new][]" type="text" placeholder="Secondary School">
 	</div>
 	</td>
 	<td>
 	<label class="control-label">Year End</label>
 	<div class="controls">
-		<input disabled name="secyearend[]" type="text" placeholder="Year End">
+		<input disabled name="secyearend[new][]" type="text" placeholder="Year End">
 		<button class="btn-close btn btn-small btn-danger">X</button>
 	</div>
 	</td>
 	</tr>
 	<?php 
 	$count = 1;
-	foreach($data['secondary'] as $index => $second){ ?>
-	<tr>
-	<td>
-	<?php echo ($count == 1) ? '<label class="control-label" for="secschool">Secondary School</label>': ''; ?>
-	
-	<div class="controls">
-		<input name="secschool[]" type="text" <?php echo ($count == 1) ? 'id="secschool"': ''; ?>placeholder="Secondary School" value="<?php echo $index; ?>" />
-	</div>
-	</td>
-	<td>
-	<label class="control-label">Year End</label>
-	<div class="controls">
-		<input name="secyearend[]" type="text" placeholder="Year End" value="<?php echo $second; ?>" />
-		<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
-	</div>
-	</td>
-	</tr>
-	<?php ++$count; } ?>
+	foreach($data['Secondary'] as $index => $second){ 
+		foreach($second as $year => $place){ ?>
+		<tr>
+		<td>
+		<?php echo ($count == 1) ? '<label class="control-label" for="secschool">Secondary School</label>': ''; ?>
+		
+		<div class="controls">
+			<input name="secschool[<?php echo $index; ?>]" type="text" <?php echo ($count == 1) ? 'id="secschool"': ''; ?>placeholder="Secondary School" value="<?php echo $place; ?>" />
+		</div>
+		</td>
+		<td>
+		<label class="control-label">Year End</label>
+		<div class="controls">
+			<input name="secyearend[<?php echo $index; ?>]" type="text" placeholder="Year End" value="<?php echo $year; ?>" />
+			<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
+		</div>
+		</td>
+		</tr>
+	<?php } ++$count; } ?>
 	</table>
 	<p>&nbsp;</p>
 	<div class="controls">
@@ -181,19 +269,24 @@ require_once("models/header.php");
 	<td>
 	<label class="control-label">Higher Education</label>
 	<div class="controls">
-		<input disabled name="higschool[]" type="text" placeholder="Higher Education" />
+		<select disabled name="higschool[new][]">
+			<option value="" selected>Please select IPT</option>
+			<?php foreach($ipts as $index2 => $ipt){ ?>
+				<option value="<?php echo $index2; ?>"><?php echo $ipt; ?></option>
+			<?php } ?>
+		</select>
 	</div>
 	<p>&nbsp;</p>
 	<label class="control-label">Course</label>
 	<div class="controls">
-		<input disabled name="higcourse[]" type="text" placeholder="Course" />
+		<input disabled name="higcourse[new][]" type="text" placeholder="Course" />
 	</div>
 	<p>&nbsp;</p>
 	</td>
 	<td>
 	<label class="control-label">Year End</label>
 	<div class="controls">
-		<input disabled name="higyearend[]" type="text" placeholder="Year End">
+		<input disabled name="higyearend[new][]" type="text" placeholder="Year End">
 		<button class="btn-close btn btn-small btn-danger">X</button>
 	</div>
 	
@@ -201,29 +294,36 @@ require_once("models/header.php");
 	</tr>
 	<?php 
 	$count = 1;
-	foreach($data['high'] as $index => $high){ ?>
-	<tr>
-	<td>
-	<label class="control-label" for="higschool">Higher Education</label>
-	<div class="controls">
-		<input name="higschool[]" type="text" id="higschool" placeholder="Higher Education" value="<?php echo $index; ?>" />
-	</div>
-	<p>&nbsp;</p>
-	<label class="control-label" for="higcourse">Course</label>
-	<div class="controls">
-		<input name="higcourse[]" type="text" id="higcourse" placeholder="Course" value="<?php echo $high['course']; ?>" />
-	</div>
-	<p>&nbsp;</p>
-	</td>
-	<td>
-	<label class="control-label">Year End</label>
-	<div class="controls">
-		<input name="higyearend[]" type="text" placeholder="Year End" value="<?php echo $high['year']; ?>" />
-		<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
-	</div>
-	</td>
-	</tr>
-	<?php ++$count; } ?>
+	foreach($data['Higher'] as $index => $high){ 
+		foreach($high as $course => $yearplace){ 
+		foreach($yearplace as $year => $place){ ?>
+		<tr>
+		<td>
+		<label class="control-label" for="higschool">Higher Education</label>
+		<div class="controls">
+			<select name="higschool[<?php echo $index; ?>]" id="higschool">
+				<option value="">Please select IPT</option>
+				<?php foreach($ipts as $index2 => $ipt){ ?>
+					<option <?php echo ($place == $index2)? 'selected':''; ?> value="<?php echo $index2; ?>"><?php echo $ipt; ?></option>
+				<?php } ?>
+			</select>
+		</div>
+		<p>&nbsp;</p>
+		<label class="control-label" for="higcourse">Course</label>
+		<div class="controls">
+			<input name="higcourse[<?php echo $index; ?>]" type="text" id="higcourse" placeholder="Course" value="<?php echo $course; ?>" />
+		</div>
+		<p>&nbsp;</p>
+		</td>
+		<td>
+		<label class="control-label">Year End</label>
+		<div class="controls">
+			<input name="higyearend[<?php echo $index; ?>]" type="text" placeholder="Year End" value="<?php echo $year; ?>" />
+			<?php echo ($count != 1) ? '<button class="btn-close2 btn btn-small btn-danger">X</button>':''; ?>
+		</div>
+		</td>
+		</tr>
+	<?php } } ++$count; } ?>
 	</table>
 	
 	<div class="controls">
@@ -290,15 +390,29 @@ require_once("models/header.php");
 				$(this).parent().parent().parent().remove();
 				return false;
 			}).parent().parent().parent()
-			.find('input')
+			.find('input, select')
 			.removeAttr('disabled');
 			return false;
 		});
 		
+		
 		$('.btn-close2').each(function(){
 			var curBtn = $(this);
 			curBtn.click(function(){
-				$(this).parent().parent().parent().remove();
+			
+				$.ajax({
+					url: 'user_education_ajax.php',
+					data: {cmd: 'delete', education_id: $(this).parent().find('input').attr('name').split('[')[1].split(']')[0]},
+					type: 'get'
+				}).done(function(data){
+					if(data == 'success')
+						curBtn.parent().parent().parent().remove();
+					else
+						alert('fail to delete');
+				});
+			
+			
+				//$(this).parent().parent().parent().remove();
 				return false;
 			});
 		});

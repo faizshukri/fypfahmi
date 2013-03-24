@@ -843,18 +843,6 @@ function updateSkill($id = null, $data_content){
 	return $result;	
 }
 
-function deleteSkill($id){
-	global $mysqli,$db_table_prefix;
-	$stmt = $mysqli->prepare("DELETE FROM ".$db_table_prefix."user_skills
-			WHERE 
-			id=?");
-			
-	$stmt->bind_param("i", $id);
-	$result = $stmt->execute();
-	$stmt->close();	
-	return $result;	
-}
-
 function getSkill($id = null, $user_id = null){
 	global $mysqli,$db_table_prefix;
 	$column = $cond = false;
@@ -880,6 +868,98 @@ function getSkill($id = null, $user_id = null){
 	$stmt->close();
 	return ($row);
 }
+
+
+function deleteSkill($id){
+	global $mysqli,$db_table_prefix;
+	$stmt = $mysqli->prepare("DELETE FROM ".$db_table_prefix."user_skills
+			WHERE 
+			id=?");
+			
+	$stmt->bind_param("i", $id);
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;	
+}
+
+//Update Education
+function updateEducation($id = null, $data_content){
+	global $mysqli,$db_table_prefix;
+	if(!empty($id)){ //Update
+		//debug($data_content);
+		$stmt = $mysqli->prepare("UPDATE ".$db_table_prefix."user_education
+			SET 
+			type = ? ,
+			edu_place = ? ,
+			year = ? ,
+			course = ?
+			WHERE
+			id = ?");
+			
+		$stmt->bind_param("ssisi", $data_content['type'], $data_content['edu_place'], $data_content['year'], $data_content['course'], $id);
+	} else { //not exist. add new record
+		//debug($data_content);
+		$stmt = $mysqli->prepare("INSERT INTO ".$db_table_prefix."user_education (
+			type,
+			edu_place,
+			year,
+			course,
+			user_id
+			)
+			VALUES (
+			?,
+			?,
+			?,
+			?,
+			?
+			)");
+		$stmt->bind_param("ssisi", $data_content['type'], $data_content['edu_place'], $data_content['year'], $data_content['course'], $data_content['user_id']);
+	}
+	
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;	
+}
+
+function getEducation($id = null, $user_id = null){
+	global $mysqli,$db_table_prefix;
+	$column = $cond = false;
+	if($id != null){
+		$column = 'id';
+		$cond = $id;
+	} else if($user_id != null) {
+		$column = 'user_id';
+		$cond = $user_id;
+	}
+	$stmt = $mysqli->prepare("SELECT 
+		*
+		FROM ".$db_table_prefix."user_education
+		WHERE
+		".$column." = ?");
+	$stmt->bind_param("i", $cond);
+	$stmt->execute();
+	$stmt->bind_result($id, $type, $edu_place, $year, $course, $user_id);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'type' => $type,'edu_place' => $edu_place,'year' => $year,'course' => $course, 'user_id' => $user_id );
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function deleteEducation($id){
+	global $mysqli,$db_table_prefix;
+	$stmt = $mysqli->prepare("DELETE FROM ".$db_table_prefix."user_education
+			WHERE 
+			id=?");
+			
+	$stmt->bind_param("i", $id);
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;	
+}
+
+
 
 //Update a user's title
 function updateUserData($user_id, $type, $content)
@@ -1663,13 +1743,42 @@ function getUserByPlace($ipt_id = false, $state_id = false, $zone_id = false){
 		$states_id = trim($states_id, ",");
 		$sql .= " AND ipt.state_id IN(".$states_id.")";
 	}
-	$sql .= " AND edu.`year` = (SELECT max(edu2.`year`) FROM uc_user_education edu2 WHERE edu2.user_id = edu.user_id ) GROUP BY edu.user_id";
+	$sql .= " AND edu.`year` = (SELECT max(edu2.`year`) FROM uc_user_education edu2 WHERE edu2.user_id = edu.user_id AND edu2.`type` = 'Higher' ) GROUP BY edu.user_id";
 	$stmt = $mysqli->prepare($sql);
 	$stmt->execute();
 	$stmt->bind_result($fullname, $contact, $email, $ipt, $state, $year);
 	$row = false;
 	while ($stmt->fetch()){
 		$row[] = array('fullname' => $fullname, 'contact' => $contact, 'email' => $email, 'ipt' => $ipt, 'state' => $state);
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function getAllIpt(){
+	global $mysqli,$db_table_prefix; 
+	$sql = "SELECT ipt.id, ipt.ipt FROM ".$db_table_prefix."ipt ipt";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->execute();
+	$stmt->bind_result($id, $ipt);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[$id] = $ipt;
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function getIptById($id){
+	global $mysqli,$db_table_prefix; 
+	$sql = "SELECT ipt.ipt FROM ".$db_table_prefix."ipt ipt WHERE ipt.id=? LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->bind_param("i", $id);
+	$stmt->execute();
+	$stmt->bind_result($ipt);
+	$row = false;
+	while ($stmt->fetch()){
+		$row = array('ipt' => $ipt);
 	}
 	$stmt->close();
 	return ($row);

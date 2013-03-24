@@ -51,7 +51,7 @@ if(!empty($_POST)){
 	
 	//updateSkill($loggedInUser->user_id , $data_content);
 	//debug($newContent);
-	($skills);
+	//($skills);
 	$errors = array();
 	
 	//End data validation
