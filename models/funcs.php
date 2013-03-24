@@ -297,6 +297,37 @@ function emailUsernameLinked($email,$username)
 }
 
 //Retrieve information for all users
+function fetchUserBiodataByIpt($ipt_id)
+{
+	global $mysqli,$db_table_prefix; 
+	$stmt = $mysqli->prepare("SELECT 
+		id,
+		user_name,
+		display_name,
+		password,
+		email,
+		activation_token,
+		last_activation_request,
+		lost_password_request,
+		active,
+		title,
+		ipt_id,
+		user_parent,
+		sign_up_stamp,
+		last_sign_in_stamp
+		FROM ".$db_table_prefix."users WHERE ipt_id='".$ipt_id."'");
+	$stmt->execute();
+	$stmt->bind_result($id, $user, $display, $password, $email, $token, $activationRequest, $passwordRequest, $active, $title, $ipt_id, $user_parent, $signUp, $signIn);
+	
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'user_name' => $user, 'display_name' => $display, 'password' => $password, 'email' => $email, 'activation_token' => $token, 'last_activation_request' => $activationRequest, 'lost_password_request' => $passwordRequest, 'active' => $active, 'title' => $title, 'ipt_id' => $ipt_id, 'user_parent' => $user_parent, 'sign_up_stamp' => $signUp, 'last_sign_in_stamp' => $signIn);
+	}
+	$stmt->close();
+	return ($row);
+}
+
+//Retrieve information for all users
 function fetchAllUsersByMentor($mentor_id)
 {
 	global $mysqli,$db_table_prefix; 
@@ -345,6 +376,37 @@ function fetchAllUsers()
 		sign_up_stamp,
 		last_sign_in_stamp
 		FROM ".$db_table_prefix."users");
+	$stmt->execute();
+	$stmt->bind_result($id, $user, $display, $password, $email, $token, $activationRequest, $passwordRequest, $active, $title, $user_parent, $signUp, $signIn);
+	
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'user_name' => $user, 'display_name' => $display, 'password' => $password, 'email' => $email, 'activation_token' => $token, 'last_activation_request' => $activationRequest, 'lost_password_request' => $passwordRequest, 'active' => $active, 'title' => $title, 'user_parent' => $user_parent,'sign_up_stamp' => $signUp, 'last_sign_in_stamp' => $signIn);
+	}
+	$stmt->close();
+	return ($row);
+}
+
+//Retrieve information for all users by Id
+function fetchAllUsersById($id)
+{
+	global $mysqli,$db_table_prefix; 
+	$stmt = $mysqli->prepare("SELECT 
+		id,
+		user_name,
+		display_name,
+		password,
+		email,
+		activation_token,
+		last_activation_request,
+		lost_password_request,
+		active,
+		title,
+		user_parent,
+		sign_up_stamp,
+		last_sign_in_stamp
+		FROM ".$db_table_prefix."users
+		WHERE id = ?
+		");
 	$stmt->execute();
 	$stmt->bind_result($id, $user, $display, $password, $email, $token, $activationRequest, $passwordRequest, $active, $title, $user_parent, $signUp, $signIn);
 	
@@ -748,6 +810,63 @@ function fetchChecklistByUserId($user_id){
 
 //Functions that interact mainly with .user_data table
 //------------------------------------------------------------------------------
+
+function updateSkill($id = null, $data_content, $type = 1){
+	//getSkill();
+	global $mysqli,$db_table_prefix;
+	if(!empty($id)){ //Update
+		$stmt = $mysqli->prepare("UPDATE ".$db_table_prefix."user_skills
+			SET 
+			type = ? ,
+			skill_name = ? 
+			WHERE
+			id = ?");
+			
+		$stmt->bind_param("ssi", $data_content['type'], $data_content['skill_name'], $user_id);
+	} else { //not exist. add new record
+		$stmt = $mysqli->prepare("INSERT INTO ".$db_table_prefix."user_skills (
+			type,
+			skill_name
+			user_id,
+			)
+			VALUES (
+			?,
+			?,
+			?
+			)");
+		$stmt->bind_param("ssi", $data_content['type'], $data_content['skill_name'], $data_content['user_id']);
+	}
+	
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;	
+}
+
+function getSkill($id = null, $user_id = null){
+	global $mysqli,$db_table_prefix;
+	$column = $cond = false;
+	if($id != null){
+		$column = 'id';
+		$cond = $id;
+	} else if($user_id != null) {
+		$column = 'user_id';
+		$cond = $user_id;
+	}
+	$stmt = $mysqli->prepare("SELECT 
+		*
+		FROM ".$db_table_prefix."user_skills
+		WHERE
+		".$column." = ?");
+	$stmt->bind_param("i", $cond);
+	$stmt->execute();
+	$stmt->bind_result($id, $user_id, $type, $skill_name);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'user_id' => $user_id, 'type' => $type, 'skill_name' => $skill_name );
+	}
+	$stmt->close();
+	return ($row);
+}
 
 //Update a user's title
 function updateUserData($user_id, $type, $content)
@@ -1441,6 +1560,78 @@ function securePage($uri){
 		}
 	}
 }
+
+//Functions that interact mainly with search listing
+//------------------------------------------------------------------------------
+
+function getAllList(){
+	$cols = array(
+		'states' => 'state', 
+		'ipt' => 'ipt', 
+		'zones' => 'zone'
+	);
+	global $mysqli,$db_table_prefix; 
+	$row = false;
+	foreach($cols as $index => $col ){
+		
+		$stmt = $mysqli->prepare("SELECT terbaik.id, terbaik.".$col." 
+				FROM ".$db_table_prefix.$index." terbaik ORDER BY terbaik.".$col." ASC ");
+		$stmt->execute();
+		$stmt->bind_result($id, $value);
+		
+		while ($stmt->fetch()){
+			$row[$index][$id] = $value;
+		}
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function selectStateByZone($zone_id = ''){
+	global $mysqli,$db_table_prefix; 
+	$sql = "SELECT 
+			`id`,
+			`state`
+			FROM ".$db_table_prefix."states as state";
+	if(!empty($zone_id)){
+		$sql.="	WHERE state.zon_id=? ";
+	}
+	$sql .= " ORDER BY state.state ASC";
+	$stmt = $mysqli->prepare($sql);
+	if(!empty($zone_id)){ $stmt->bind_param("i", $zone_id); }
+	$stmt->execute();
+	$stmt->bind_result($id, $state);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[$id] = $state;
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function selectIptByState($state_id){
+	global $mysqli,$db_table_prefix; 
+	$sql = "SELECT 
+			`id`,
+			`ipt`
+			FROM ".$db_table_prefix."ipt as ipt";
+	if(!empty($state_id)){
+		$sql.="	WHERE ipt.state_id=? ";
+	}
+	$sql .= " ORDER BY ipt.ipt ASC";
+	$stmt = $mysqli->prepare($sql);
+	if(!empty($state_id)){ $stmt->bind_param("i", $state_id); }
+	$stmt->execute();
+	$stmt->bind_result($id, $ipt);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[$id] = $ipt;
+	}
+	$stmt->close();
+	return ($row);
+}
+
+
 
 function debug($text){
 	echo '<pre>';

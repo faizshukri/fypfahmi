@@ -15,7 +15,6 @@ echo "
 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 
 <title>".$websiteName."</title>
-<link href='site-templates/css/bootstrap-responsive.min.css' rel='stylesheet'>
 <link href='".$template."' rel='stylesheet' type='text/css' />
 <link href='".$site_url."/css/jquery-ui.min.css' rel='stylesheet' type='text/css' />
 <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'></script>

@@ -33,7 +33,7 @@ if(isUserLoggedIn()) { ?>
 	  <li class="biodata"><a href="user_biodata.php">Biodata</a></li>
 	  <li class="education"><a href="user_education.php">Education Background</a></li>
 	  <li class="expertise"><a href="user_expertise.php">Expertise</a></li>
-	  <!-- <li class="membership"><a href="user_membership.php">Membership</a></li>-->
+	  <li class="membership"><a href="user_membership.php">Membership</a></li>
 	  <li class="personal"><a href="user_development.php">Personal Development</a></li>
 	  <?php } ?>
 	  <li class="nav-header">User Menu</li>
@@ -41,12 +41,17 @@ if(isUserLoggedIn()) { ?>
 	  <li class="user"><a href='user_settings.php'>Change Email / Password</a></li>
 	  <?php if($loggedInUser->checkPermission(array(2))){ ?>
 		<li class="register"><a href='register.php'>Register User</a></li>
+		<li class="mentorlist"><a href='mentorlist.php'>Circle Mentor List</a></li>
+		<li class="menteelist"><a href='menteelist.php'>Circle Mentee List</a></li>
+		<li class="circleassign"><a href='circleassign.php'>Circle Member Assignation</a></li>
+		<li class="searchlist"><a href='searchlist.php'>Search Listing</a></li>
 	  <?php } ?>
 	   <?php if($loggedInUser->checkPermission(array(3))){ ?>
 		<li class="register"><a href='register.php'>Register Mentee</a></li>
 	    <li class="mentee"><a href="admin_users.php">Mentee List</a></li>
 	    <li class="dev_personal"><a href="development_add.php">Personal Development</a></li>
-	    <li class="monitor"><a href="development_monitor.php">Development Monitoring</a></li>
+	    <li class="monitor"><a href="development_monitor.php">Development Monitor</a></li>
+		<li class="searchlist"><a href='searchlist.php'>Search Listing</a></li>
 	   <?php } ?>
 	  <li class="logout"><a href='logout.php'>Logout</a></li>
 	  <?php 
