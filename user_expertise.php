@@ -5,25 +5,53 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 
 //Form is submit
 if(!empty($_POST)){
+	//debug($_POST);
 	$tmphard = (isset($_POST['hardskills']['new']))?$_POST['hardskills']['new']:'';
 	$tmpsoft = (isset($_POST['softskills']['new']))?$_POST['softskills']['new']:'';
+	if(isset($_POST['hardskills'][0])) $tmphard[] = $_POST['hardskills'][0];
+	if(isset($_POST['softskills'][0])) $tmpsoft[] = $_POST['softskills'][0];
 	$newContent = array(
-		'hard' => $tmphard,
-		'soft' => $tmpsoft
+		'Hard' => $tmphard,
+		'Soft' => $tmpsoft
 	);
 	
 	unset($_POST['hardskills']['new']);
 	unset($_POST['softskills']['new']);
+	unset($_POST['hardskills'][0]);
+	unset($_POST['softskills'][0]);
 
 	$skills = array(
-		'hard' => $_POST['hardskills'],
-		'soft' => $_POST['softskills']
+		'Hard' => $_POST['hardskills'],
+		'Soft' => $_POST['softskills']
 	);
 	
 	
+	//Insert
+	foreach($newContent as $index => $content){
+		//debug($content);
+		if(!empty($content)){
+			foreach($content as $index2 => $skill){
+				if(!empty($skill))
+					updateSkill(null, array('type'=>$index, 'skill_name' => $skill, 'user_id' => $loggedInUser->user_id));
+			}
+		}
+	}
+	
+	//Update
+	foreach($skills as $index => $cat){
+		if(!empty($cat)){
+			foreach($cat as $index2 => $skill){
+				if(!empty($skill))
+					updateSkill($index2, array('type'=>$index, 'skill_name' => $skill, 'user_id' => $loggedInUser->user_id));
+			}
+		}
+	}
 	
 	//debug($newContent);
-	debug($skills);
+	
+	//updateSkill($loggedInUser->user_id , $data_content);
+	//debug($newContent);
+	($skills);
 	$errors = array();
 	
 	//End data validation
@@ -39,7 +67,6 @@ $data_content = array(
 	'skill_name' => 'Main game'
 );
 
-// updateSkill($loggedInUser->user_id , $data_content);
 $data = false;
 $data2 = getSkill(null, $loggedInUser->user_id);
 
@@ -114,10 +141,10 @@ require_once("models/header.php");
 		
 			<?php 
 			$count = 1;
-			foreach($data['Soft'] as $soft){ ?>
+			foreach($data['Soft'] as $index => $soft){ ?>
 			<?php echo ($count == 1)? '<label class="control-label" for="softskills">Skills Possessed: </label>':''; ?>
 			<div class="controls">
-				<input class="input-xlarge" name="softskills[]" type="text" id="softskills" placeholder="Skills Possessed" value="<?php echo $soft; ?>" />
+				<input class="input-xlarge" name="softskills[<?php echo $index; ?>]" type="text" id="softskills" placeholder="Skills Possessed" value="<?php echo $soft; ?>" />
 				<?php echo ($count != 1)? '<button class="btn-close btn btn-danger btn-small">X</button>':''; ?>
 				<br /><br />
 			</div>
@@ -155,6 +182,7 @@ require_once("models/header.php");
 				.show()
 				.find('.btn-close')
 				.click(function(){
+					
 					$(this).parent().remove();
 					return false;
 				}).parent()
@@ -180,7 +208,16 @@ require_once("models/header.php");
 		$('.btn-close').each(function(){
 			var curBtn = $(this);
 			curBtn.click(function(){
-				$(this).parent().remove();
+				$.ajax({
+					url: 'user_expertise_ajax.php',
+					data: {cmd: 'delete', skill_id: $(this).parent().find('input').attr('name').split('[')[1].split(']')[0]},
+					type: 'get'
+				}).done(function(data){
+					if(data == 'success')
+						curBtn.parent().remove();
+					else
+						alert('fail to delete');
+				});
 				return false;
 			});
 		});

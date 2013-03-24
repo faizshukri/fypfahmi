@@ -811,10 +811,10 @@ function fetchChecklistByUserId($user_id){
 //Functions that interact mainly with .user_data table
 //------------------------------------------------------------------------------
 
-function updateSkill($id = null, $data_content, $type = 1){
-	//getSkill();
+function updateSkill($id = null, $data_content){
 	global $mysqli,$db_table_prefix;
 	if(!empty($id)){ //Update
+		//debug($data_content);
 		$stmt = $mysqli->prepare("UPDATE ".$db_table_prefix."user_skills
 			SET 
 			type = ? ,
@@ -822,12 +822,13 @@ function updateSkill($id = null, $data_content, $type = 1){
 			WHERE
 			id = ?");
 			
-		$stmt->bind_param("ssi", $data_content['type'], $data_content['skill_name'], $user_id);
+		$stmt->bind_param("ssi", $data_content['type'], $data_content['skill_name'], $id);
 	} else { //not exist. add new record
+		//debug($data_content);
 		$stmt = $mysqli->prepare("INSERT INTO ".$db_table_prefix."user_skills (
 			type,
-			skill_name
-			user_id,
+			skill_name,
+			user_id
 			)
 			VALUES (
 			?,
@@ -837,6 +838,18 @@ function updateSkill($id = null, $data_content, $type = 1){
 		$stmt->bind_param("ssi", $data_content['type'], $data_content['skill_name'], $data_content['user_id']);
 	}
 	
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;	
+}
+
+function deleteSkill($id){
+	global $mysqli,$db_table_prefix;
+	$stmt = $mysqli->prepare("DELETE FROM ".$db_table_prefix."user_skills
+			WHERE 
+			id=?");
+			
+	$stmt->bind_param("i", $id);
 	$result = $stmt->execute();
 	$stmt->close();	
 	return $result;	
@@ -1626,6 +1639,37 @@ function selectIptByState($state_id){
 	$row = false;
 	while ($stmt->fetch()){
 		$row[$id] = $ipt;
+	}
+	$stmt->close();
+	return ($row);
+}
+
+function getUserByPlace($ipt_id = false, $state_id = false, $zone_id = false){
+	global $mysqli,$db_table_prefix; 
+	$sql = "SELECT biodata.fullname, biodata.contact, users.email, ipt.ipt, state.state, MAX(edu.year)
+		FROM uc_users users, uc_user_biodata biodata, uc_states state, uc_user_education edu, uc_ipt ipt
+		WHERE biodata.user_id = users.id AND biodata.state_id = state.id AND edu.user_id = users.id AND edu.edu_place = ipt.id 
+		AND edu.`type` = 'Higher'";
+	if(!empty($ipt_id)){
+		$sql .= " AND ipt.id=".$ipt_id;
+	} else if(!empty($state_id)){
+		$sql .= " AND ipt.state_id=".$state_id;
+	} else if(!empty($zone_id)){
+		$states = selectStateByZone($zone_id);
+		$states_id = '';
+		foreach($states as $index => $state){
+			$states_id .= ','.$index;
+		}
+		$states_id = trim($states_id, ",");
+		$sql .= " AND ipt.state_id IN(".$states_id.")";
+	}
+	$sql .= " GROUP BY edu.user_id ORDER BY biodata.fullname ASC";
+	$stmt = $mysqli->prepare($sql);
+	$stmt->execute();
+	$stmt->bind_result($fullname, $contact, $email, $ipt, $state, $year);
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('fullname' => $fullname, 'contact' => $contact, 'email' => $email, 'ipt' => $ipt, 'state' => $state);
 	}
 	$stmt->close();
 	return ($row);

@@ -20,6 +20,7 @@ require_once("models/header.php");
 
 <div id='regbox'>
 <form name='newUser' action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post' class="form-inline">
+<h3>Search Listing</h3>
 <div id="selectContainer">
 <select class="init" id="zones">
 	<option value="">Please select Zone</option>
@@ -43,7 +44,18 @@ require_once("models/header.php");
 </select>
 <button class="btn btn-primary" id="btnReset">Reset</button>
 </div>
-
+<table class="table" id="result">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Phone No.</th>
+			<th>Email</th>
+			<th>IPT</th>
+			<th>Home Address</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
 
 
 <p>
@@ -63,36 +75,38 @@ require_once("models/header.php");
 		$('.nav-left li').removeClass('active');
 		$('.nav-left .searchlist').addClass('active');
 		
-		$('#zones').change(function(){
-			changeZone();
-		});
-		
 		$('#btnReset').click(function(){
 			$('#zones').val('');
+			$('#states').val('');
+			$('#ipt').val('');
 			changeZone();
+			changeListStart();
 			return false;
 		});
 		
+		changeZone();
 		changeState();
-		changeListTable();
-		
+		changeIpt();
+		changeListStart();
 		
 	});
 	
 	function changeZone(){
-		
-		$.ajax({
-			url: 'searchlist_ajax.php',
-			data: { zone_id: $('#zones').val() },
-			type: 'GET'
-		}).done(function(data){
-			console.log(data);
-			var thisparent = $('#states').parent();
-			$('#states').remove();
-			$('#ipt').remove();
-			thisparent.find('#zones').after(' '+data);
-			changeState();
-			changeListTable();
+		$('#zones').change(function(){
+			$.ajax({
+				url: 'searchlist_ajax.php',
+				data: { zone_id: $('#zones').val() },
+				type: 'GET'
+			}).done(function(data){
+				console.log(data);
+				var thisparent = $('#states').parent();
+				$('#states').remove();
+				$('#ipt').remove();
+				thisparent.find('#zones').after(' '+data);
+				changeState();
+				changeIpt();
+				changeListStart();
+			});
 		});
 	}
 	
@@ -107,26 +121,33 @@ require_once("models/header.php");
 				var thisparent = $('#states').parent();
 				$('#ipt').remove();
 				thisparent.find('#states').after(' '+data);
-				changeListTable();
+				changeIpt();
+				changeListStart();
 			});
 		});
 	}
 	
-	function changeListTable(){
-		$('#selectContainer select').each(function(){
-			$(this).change(function(){
-			
-				$.ajax({
-					url: 'searchlist_ajax_table.php',
-					data: { state_id: $('#states').val(), zone_id: $('#zones').val(), ipt_id: $('#ipt').val() },
-					type: 'GET'
-				}).done(function(data){
-					console.log(data);
-				});
-				
+	function changeIpt(){
+		$('#ipt').change(function(){
+			$.ajax({
+				url: 'searchlist_ajax.php',
+				data: { state_id: $('#states').val(), zone_id: $('#zones').val() },
+				type: 'GET'
+			}).done(function(data){
+				changeListStart();
 			});
 		});
-		
+	}
+	
+	function changeListStart(){
+		$.ajax({
+			url: 'searchlist_ajax_table.php',
+			data: { state_id: $('#states').val(), zone_id: $('#zones').val(), ipt_id: $('#ipt').val() },
+			type: 'GET'
+		}).done(function(data2){
+			$('table#result tbody').html(data2);
+			console.log(data2);
+		});
 	}
 	
 </script>

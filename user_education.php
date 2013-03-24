@@ -87,7 +87,7 @@ require_once("models/header.php");
 	<tr id="sampleprischool" style="display: none;">
 	<td>
 	<div class="controls">
-		<input disabled name="prischool[]" type="text" placeholder="Primary School">
+		<input disabled name="prischool[new][]" type="text" placeholder="Primary School">
 	</div>
 	</td>
 	<td>
