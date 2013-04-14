@@ -163,6 +163,17 @@ class User
 				$stmt->bind_param("s", $inserted_id);
 				$stmt->execute();
 				$stmt->close();
+				
+				//Insert into user biodata
+				$stmt = $mysqli->prepare("INSERT INTO ".$db_table_prefix."user_biodata  (
+					user_id
+					)
+					VALUES (
+					?
+					)");
+				$stmt->bind_param("s", $inserted_id);
+				$stmt->execute();
+				$stmt->close();
 			}
 		}
 	}

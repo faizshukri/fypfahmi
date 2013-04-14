@@ -5,22 +5,38 @@ http://usercake.com
 */
 
 function getState(){
-	return array(
-		'Johor' => 'Johor',
-		'Kedah' => 'Kedah',
-		'Kelantan' => 'Kelantan',
-		'Kuala Lumpur' => 'Kuala Lumpur',
-		'Melaka' => 'Melaka',
-		'Negeri Sembilan' => 'Negeri Sembilan',
-		'Pahang' => 'Pahang',
-		'Perak' => 'Perak',
-		'Perlis' => 'Perlis',
-		'Pulau Pinang' => 'Pulau Pinang',
-		'Sabah' => 'Sabah',
-		'Sarawak' => 'Sarawak',
-		'Selangor' => 'Selangor',
-		'Terengganu' => 'Terengganu'
-	);
+
+	global $mysqli,$db_table_prefix;
+	$stmt = $mysqli->prepare("SELECT *
+		FROM ".$db_table_prefix."states
+		ORDER BY state");
+		
+	$stmt->execute();
+	$stmt->bind_result($id, $state, $zon_id);
+	
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'state' => $state, 'zon_id' => $zon_id);
+	}
+	$stmt->close();
+	return ($row);
+
+	// return array(
+		// 'Johor' => 'Johor',
+		// 'Kedah' => 'Kedah',
+		// 'Kelantan' => 'Kelantan',
+		// 'Kuala Lumpur' => 'Kuala Lumpur',
+		// 'Melaka' => 'Melaka',
+		// 'Negeri Sembilan' => 'Negeri Sembilan',
+		// 'Pahang' => 'Pahang',
+		// 'Perak' => 'Perak',
+		// 'Perlis' => 'Perlis',
+		// 'Pulau Pinang' => 'Pulau Pinang',
+		// 'Sabah' => 'Sabah',
+		// 'Sarawak' => 'Sarawak',
+		// 'Selangor' => 'Selangor',
+		// 'Terengganu' => 'Terengganu'
+	// );
 }
 
 //Functions that do not interact with DB
@@ -356,6 +372,48 @@ function fetchAllUsersByMentor($mentor_id)
 	$stmt->close();
 	return ($row);
 }
+//Retrieve information for all users
+function fetchAllMentorByUserState($user_id)
+{
+	global $mysqli,$db_table_prefix; 
+	$stmt = $mysqli->prepare("SELECT users.id, biodata.fullname
+		FROM uc_users users, uc_user_biodata biodata, uc_user_permission_matches perm_match
+		WHERE users.id=biodata.user_id
+		AND perm_match.user_id=users.id
+		AND perm_match.permission_id='3'
+		AND biodata.state_id IN (SELECT states.id
+		FROM uc_states states, uc_user_biodata biodata, uc_users users
+		WHERE biodata.user_id = users.id
+		AND biodata.state_id = states.id
+		AND users.id='".$user_id."')");
+	$stmt->execute();
+	$stmt->bind_result($id, $fullname);
+	
+	$row = false;
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'fullname'=>$fullname, 'cat' => 'home');
+	}
+	$stmt->close();
+	$stmt = $mysqli->prepare("SELECT users.id, biodata.fullname
+		FROM uc_users users, uc_user_biodata biodata, uc_user_permission_matches perm_match
+		WHERE users.id=biodata.user_id
+		AND perm_match.user_id=users.id
+		AND perm_match.permission_id='3'
+		AND biodata.state_id IN (SELECT states.id
+		FROM uc_states states, uc_users users, uc_user_education edu, uc_ipt ipt
+		WHERE users.id=edu.user_id
+		AND edu.edu_place = ipt.id
+		AND ipt.state_id = states.id
+		AND edu.`type`='Higher'
+		AND users.id = '".$user_id."')");
+	$stmt->execute();
+	$stmt->bind_result($id, $fullname);
+	while ($stmt->fetch()){
+		$row[] = array('id' => $id, 'fullname'=>$fullname, 'cat' => 'ipt');
+	}
+	$stmt->close();
+	return ($row);
+}
 
 //Retrieve information for all users
 function fetchAllUsers()
@@ -417,6 +475,54 @@ function fetchAllUsersById($id)
 	return ($row);
 }
 
+//Update user biodata
+function updateUserBiodata($user_id, $data){
+	global $mysqli,$db_table_prefix;
+	$sql = "UPDATE ".$db_table_prefix."user_biodata
+		SET ";
+	$count = 0;
+	$datasize = sizeof($data);
+	//debug($data);
+	foreach($data as $index => $row){
+		++$count;
+		$sql .= $index . "='$row'"; 
+		if($count < $datasize)
+			$sql .= ',';
+	}
+	
+	$sql .= " WHERE
+	user_id = $user_id;";
+	
+	//debug($sql);
+	//die();
+	$stmt = $mysqli->prepare($sql);
+	$result = $stmt->execute();
+	$stmt->close();
+	return $result;
+}	
+
+function getUserBiodata($id)
+{
+	global $mysqli,$db_table_prefix; 
+	$stmt = $mysqli->prepare("SELECT 
+		biodata.*
+		FROM ".$db_table_prefix."user_biodata AS biodata 
+		WHERE biodata.user_id = ? 
+		LIMIT 1");
+		$stmt->bind_param("i", $id);
+	
+	$stmt->execute();
+	$stmt->bind_result($id, $user_id, $fullname, $ic_no, $date_birth, $contact, $address, $city, $state_id);
+	while ($stmt->fetch()){
+		$row = array('id' => $id, 'user_id' => $user_id, 'fullname' => $fullname, 'ic_no' => $ic_no, 'date_birth' => $date_birth, 'contact' => $contact, 'address' => $address, 'city' => $city, 'state_id' => $state_id);
+	}
+	$stmt->close();
+	if(isset($row) && !empty($row))
+		return ($row);
+	
+	return false;
+}
+
 //Retrieve complete user information by username, token or ID
 function fetchUserDetails($username=NULL,$token=NULL, $id=NULL)
 {
@@ -424,42 +530,47 @@ function fetchUserDetails($username=NULL,$token=NULL, $id=NULL)
 		$column = "user_name";
 		$data = $username;
 	}
-	elseif($token!=NULL) {
+	else if($token!=NULL) {
 		$column = "activation_token";
 		$data = $token;
 	}
-	elseif($id!=NULL) {
+	else if($id!=NULL) {
 		$column = "id";
 		$data = $id;
 	}
 	global $mysqli,$db_table_prefix; 
 	$stmt = $mysqli->prepare("SELECT 
-		id,
-		user_name,
-		display_name,
-		password,
-		email,
-		activation_token,
-		last_activation_request,
-		lost_password_request,
-		active,
-		title,
-		user_parent,
-		sign_up_stamp,
-		last_sign_in_stamp
-		FROM ".$db_table_prefix."users
-		WHERE
-		$column = ?
+		users.id,
+		users.user_name,
+		users.display_name,
+		users.password,
+		users.email,
+		users.activation_token,
+		users.last_activation_request,
+		users.lost_password_request,
+		users.active,
+		users.title,
+		users.user_parent,
+		users.sign_up_stamp,
+		users.last_sign_in_stamp,
+		biodata.fullname 
+		FROM ".$db_table_prefix."users AS users, ".$db_table_prefix."user_biodata AS biodata 
+		WHERE users.`id` = biodata.`user_id` 
+		AND users.`$column` = ? 
 		LIMIT 1");
 		$stmt->bind_param("s", $data);
 	
 	$stmt->execute();
-	$stmt->bind_result($id, $user, $display, $password, $email, $token, $activationRequest, $passwordRequest, $active, $title, $user_parent, $signUp, $signIn);
+	$stmt->bind_result($id, $user, $display, $password, $email, $token, $activationRequest, $passwordRequest, $active, $title, $user_parent, $signUp, $signIn, $fullname);
+	//debug($stmt->fetch());
 	while ($stmt->fetch()){
-		$row = array('id' => $id, 'user_name' => $user, 'display_name' => $display, 'password' => $password, 'email' => $email, 'activation_token' => $token, 'last_activation_request' => $activationRequest, 'lost_password_request' => $passwordRequest, 'active' => $active, 'title' => $title, 'user_parent' => $user_parent, 'sign_up_stamp' => $signUp, 'last_sign_in_stamp' => $signIn);
+		$row = array('id' => $id, 'user_name' => $user, 'display_name' => $display, 'password' => $password, 'email' => $email, 'activation_token' => $token, 'last_activation_request' => $activationRequest, 'lost_password_request' => $passwordRequest, 'active' => $active, 'title' => $title, 'user_parent' => $user_parent, 'sign_up_stamp' => $signUp, 'last_sign_in_stamp' => $signIn, 'fullname' => $fullname);
 	}
 	$stmt->close();
-	return ($row);
+	if(isset($row) && !empty($row))
+		return ($row);
+	
+	return false;
 }
 
 //Toggle if lost password request flag on or off
@@ -810,6 +921,17 @@ function fetchChecklistByUserId($user_id){
 
 //Functions that interact mainly with .user_data table
 //------------------------------------------------------------------------------
+
+function updateAssignMentor($user_id, $parent_id){
+	global $mysqli,$db_table_prefix;
+	$stmt = $mysqli->prepare("UPDATE uc_users
+		SET uc_users.user_parent = '".$parent_id."'
+		WHERE uc_users.id = '".$user_id."'");
+			
+	$result = $stmt->execute();
+	$stmt->close();	
+	return $result;
+}
 
 function updateSkill($id = null, $data_content){
 	global $mysqli,$db_table_prefix;
@@ -1726,10 +1848,10 @@ function selectIptByState($state_id){
 
 function getUserByPlace($ipt_id = false, $state_id = false, $zone_id = false){
 	global $mysqli,$db_table_prefix; 
-	$sql = "SELECT biodata.fullname, biodata.contact, users.email, ipt.ipt, state.state, MAX(edu.year)
+	$sql = "SELECT biodata.fullname, biodata.contact, users.email, ipt.ipt, state.state, MAX(edu.year), users.id, users.user_parent
 		FROM uc_users users, uc_user_biodata biodata, uc_states state, uc_user_education edu, uc_ipt ipt
 		WHERE biodata.user_id = users.id AND biodata.state_id = state.id AND edu.user_id = users.id AND edu.edu_place = ipt.id 
-		AND edu.`type` = 'Higher'";
+		AND edu.`type` = 'Higher'" ;
 	if(!empty($ipt_id)){
 		$sql .= " AND ipt.id=".$ipt_id;
 	} else if(!empty($state_id)){
@@ -1746,10 +1868,10 @@ function getUserByPlace($ipt_id = false, $state_id = false, $zone_id = false){
 	$sql .= " AND edu.`year` = (SELECT max(edu2.`year`) FROM uc_user_education edu2 WHERE edu2.user_id = edu.user_id AND edu2.`type` = 'Higher' ) GROUP BY edu.user_id";
 	$stmt = $mysqli->prepare($sql);
 	$stmt->execute();
-	$stmt->bind_result($fullname, $contact, $email, $ipt, $state, $year);
+	$stmt->bind_result($fullname, $contact, $email, $ipt, $state, $year, $user_id, $parent_id);
 	$row = false;
 	while ($stmt->fetch()){
-		$row[] = array('fullname' => $fullname, 'contact' => $contact, 'email' => $email, 'ipt' => $ipt, 'state' => $state);
+		$row[] = array('fullname' => $fullname, 'contact' => $contact, 'email' => $email, 'ipt' => $ipt, 'state' => $state, 'user_id' => $user_id, 'parent_id' => $parent_id);
 	}
 	$stmt->close();
 	return ($row);

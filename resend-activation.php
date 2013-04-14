@@ -114,7 +114,7 @@ if(isUserLoggedIn()) { header("Location: account.php"); die(); }
 require_once("models/header.php");
 
 echo "
-<body>
+
 <div id='wrapper'>
 <div id='top'><div id='logo'></div></div>
 <div id='content'>
@@ -160,7 +160,6 @@ echo "
 </div>
 <div id='bottom'></div>
 </div>
-</body>
-</html>";
+<?php require_once('models/footer.php'); ?>";
 
 ?>

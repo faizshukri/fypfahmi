@@ -9,8 +9,8 @@ $lists = getAllList();
 require_once("models/header.php"); 
 
 ?>
-
-<body>
+<link href="css/jquery.fancybox.css" rel="stylesheet">
+<script src="js/jquery.fancybox.pack.js" type="text/javascript"></script>
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -52,16 +52,14 @@ require_once("models/header.php");
 			<th>Email</th>
 			<th>IPT</th>
 			<th>Home Address</th>
+			<?php if($loggedInUser->checkPermission(array(2))){ ?>
+				<th>Circle</th>
+			<?php } ?>
 		</tr>
 	</thead>
 	<tbody></tbody>
 </table>
 
-
-<p>
-<label>&nbsp;<br>
-<input class="btn btn-primary" type='submit' value='Register'/>
-</p>
 
 </form>
 </div>
@@ -70,6 +68,9 @@ require_once("models/header.php");
 <div id='bottom'></div>
 </div>
 </div>
+<a style="display: none;" id="inline" href="#fancydata">Trigger Fancy</a>
+<div style="display:none"><div id="fancydata"></div></div>
+
 <script type="text/javascript">
 	jQuery(document).ready(function($){
 		$('.nav-left li').removeClass('active');
@@ -88,6 +89,11 @@ require_once("models/header.php");
 		changeState();
 		changeIpt();
 		changeListStart();
+		$("a#inline").fancybox({
+			beforeClose: function(){
+				parent.location.reload(true);
+			}
+		});
 		
 	});
 	
@@ -98,7 +104,6 @@ require_once("models/header.php");
 				data: { zone_id: $('#zones').val() },
 				type: 'GET'
 			}).done(function(data){
-				console.log(data);
 				var thisparent = $('#states').parent();
 				$('#states').remove();
 				$('#ipt').remove();
@@ -117,7 +122,6 @@ require_once("models/header.php");
 				data: { state_id: $('#states').val(), zone_id: $('#zones').val() },
 				type: 'GET'
 			}).done(function(data){
-				console.log(data);
 				var thisparent = $('#states').parent();
 				$('#ipt').remove();
 				thisparent.find('#states').after(' '+data);
@@ -146,10 +150,54 @@ require_once("models/header.php");
 			type: 'GET'
 		}).done(function(data2){
 			$('table#result tbody').html(data2);
-			console.log(data2);
 		});
 	}
 	
+	function showMentor(user_id){
+	
+		$.ajax({
+			url: 'searchlist_ajax_mentor.php',
+			data: {user_id: user_id},
+			type: 'get'
+		}).done(function(data){
+			//console.log(data);
+			var html = '<div class="alert alert-success result" style="display: none;"></div>'+
+			 '<form class="form-horizontal">'+
+			  '<div class="control-group">'+
+				'<label class="control-label" for="assignMentor" style="width: 100px;">Assign Mentor</label>'+
+				'<div class="controls" style="margin-left: 120px;">'+
+				  data+
+				'</div>'+
+			  '</div>'+
+			  '<div class="control-group">'+
+				'<div class="controls" style="margin-left: 120px;">'+
+				  '<a href="#" class="submit btn btn-info">Save</a>'+
+				'</div>'+
+			  '</div>'+
+			'</form>';
+		
+			$('#fancydata').html(html);
+			$('a#inline').click();
+			
+			$('#fancydata').find('.submit').click(function(){
+				var curSelect = $('#fancydata').find('select');
+				$.ajax({
+					url: 'searchlist_ajax_save_mentor.php',
+					data: {user_id: user_id, parent_id: curSelect.val()},
+					type: 'get'
+				}).done(function(result){
+					if(result == 'true')
+						$('.result').text('Successfully saved.').show();
+					else
+						$('.result').text('Theres a problem to save your data.').show();
+						
+					$.fancybox.update();
+				});
+			});
+		});
+	
+		
+	}
+	
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

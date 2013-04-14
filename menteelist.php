@@ -32,7 +32,7 @@ foreach($users_id as $user){
 
 require_once("models/header.php"); ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -89,9 +89,7 @@ foreach ($userData as $v1) { ?>
 <script type="text/javascript">
 	jQuery(document).ready(function($){
 		$('.nav-left li').removeClass('active');
-		
-		$('.nav-left .<?php echo ($loggedInUser->checkPermission(array(2)))?'admin-user':'mentee';?>').addClass('active');
+		$('.nav-left .menteelist').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

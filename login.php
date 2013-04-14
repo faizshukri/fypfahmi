@@ -84,10 +84,10 @@ require_once("models/header.php");
 
 
 ?>
-<body>
+
 <div class="container">
-  <div class="row" style="padding-top: 15%;">
-	<div class="span4 offset4 well">
+  <div class="row" style="padding-top: 7%;">
+	<div class="span4 offset4 well" style="background-color: #83D2FF;">
 			<legend>Please Sign In</legend>
           	<?php echo resultBlock($errors,$successes); ?>
 			<form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>" accept-charset="UTF-8">
@@ -101,13 +101,12 @@ require_once("models/header.php");
 		</div>
 	</div>
 	</div>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>
 <?php
 /*
 
 echo "
-<body>
+
 <div id='wrapper'>
 <div id='top'><div id='logo'></div></div>
 <div id='content'>
@@ -143,7 +142,6 @@ echo "
 </div>
 <div id='bottom'></div>
 </div>
-</body>
-</html>";
+<?php require_once('models/footer.php'); ?>";
 */
 ?>

@@ -9,7 +9,7 @@ require_once("models/header.php");
 
 ?>
 
-<body>
+
 <link href="css/jquery.fancybox.css" rel="stylesheet">
 <script src="js/jquery.fancybox.pack.js" type="text/javascript"></script>
 <div class="container-fluid">
@@ -32,5 +32,4 @@ require_once("models/header.php");
 		$('.nav-left .monitor').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

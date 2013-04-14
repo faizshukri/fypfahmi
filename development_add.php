@@ -9,7 +9,7 @@ require_once("models/header.php");
 
 ?>
 
-<body>
+
 <link href="css/jquery.fancybox.css" rel="stylesheet">
 <script src="js/jquery.fancybox.pack.js" type="text/javascript"></script>
 <div class="container-fluid">
@@ -189,5 +189,4 @@ require_once("models/header.php");
 </script>
 <a style="display: none;" id="inline" href="#fancydata">Trigger Fancy</a>
 <div style="display:none"><div id="fancydata"></div></div>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

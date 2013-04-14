@@ -142,7 +142,7 @@ $permissionData = fetchAllPermissions();
 
 require_once("models/header.php"); ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -256,5 +256,4 @@ foreach ($permissionData as $v1) {
 		$('.nav-left .admin-user').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

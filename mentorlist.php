@@ -32,7 +32,7 @@ foreach($users_id as $user){
 
 require_once("models/header.php"); ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -45,7 +45,7 @@ require_once("models/header.php"); ?>
 <form name='adminUsers' action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post'>
 <table class='table table-striped table-hover'>
 <tr>
-<th>Delete</th><th>Username</th><th>Display Name</th><th>Title</th><th>Mentor</th><th>Last Sign In</th>
+<th width="5%">Delete</th><th>Username</th><th>Display Name</th><th>Title</th><th>Last Sign In</th>
 </tr>
 <?php 
 //Cycle through users
@@ -57,13 +57,6 @@ foreach ($userData as $v1) { ?>
 		<a href='<?php echo ($loggedInUser->checkPermission(array(2)))?'admin_user.php':'mentee.php'; ?>?id=<?php echo $v1['id']; ?>'><?php echo $v1['user_name']; ?></a></td>
 	<td><?php echo $v1['display_name']; ?></td>
 	<td><?php echo $v1['title']; ?></td>
-	<td><?php
-	if($v1['user_parent'] != '0'){
-		$details = fetchUserDetails(null, null, $v1['user_parent']);
-		echo $details['display_name'];
-	} else {
-		echo '';
-	}?></td>
 	<td>
 	<?php
 	//Interprety last login
@@ -90,8 +83,7 @@ foreach ($userData as $v1) { ?>
 	jQuery(document).ready(function($){
 		$('.nav-left li').removeClass('active');
 		
-		$('.nav-left .<?php echo ($loggedInUser->checkPermission(array(2)))?'admin-user':'mentee';?>').addClass('active');
+		$('.nav-left .mentorlist').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

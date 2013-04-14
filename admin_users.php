@@ -27,7 +27,7 @@ if($loggedInUser->checkPermission(array(3))){
 
 require_once("models/header.php"); ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -88,5 +88,4 @@ foreach ($userData as $v1) { ?>
 		$('.nav-left .<?php echo ($loggedInUser->checkPermission(array(2)))?'admin-user':'mentee';?>').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

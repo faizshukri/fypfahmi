@@ -5,10 +5,10 @@ http://usercake.com
 */
 
 //Database Information
-$db_host = "faizshukridb.cfrejxq6klx3.ap-southeast-1.rds.amazonaws.com"; //Host address (most likely localhost)
-$db_name = "fypfahmi"; //Name of Database 
-$db_user = "faizshukri"; //Name of database user
-$db_pass = "terbaikdunia"; //Password for database user
+$db_host = "localhost"; //Host address (most likely localhost)
+$db_name = "fyp2013"; //Name of Database
+$db_user = "root"; //Name of database user
+$db_pass = ""; //Password for database user
 $db_table_prefix = "uc_";
 
 GLOBAL $errors;

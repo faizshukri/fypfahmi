@@ -4,51 +4,56 @@ require_once("models/config.php");
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 
 $states = getState();
+$tmp = array();
+foreach($states as $index => $row){
+	$tmp[$row['id']] = $row['state'];
+}
+$states = $tmp;
 
 //Form is submit
 if(!empty($_POST)){
 	$errors = array();
+	$date_birth = new DateTime(trim($_POST["date_birth"]));
 	$user_data = array(
 		'fullname' => trim($_POST["fullname"]),
 		'ic_no' => trim($_POST["ic_no"]),
-		'dob' => trim($_POST["dob"]),
-		'email' => trim($_POST["email"]),
-		'no_phone' => trim($_POST["no_phone"]),
+		'date_birth' => $date_birth->format('Y-m-d H:i:s'),
+		'contact' => trim($_POST["contact"]),
 		'address' => trim($_POST["address"]),
 		'city' => trim($_POST["city"]),
-		'state' => trim($_POST["state"])
+		'state_id' => trim($_POST["state_id"])
 	);
 	
 	//End data validation
 	if(count($errors) == 0){
-		if(updateUserData($loggedInUser->user_id, 'user_biodata', json_encode($user_data)))
+		
+		if(updateUserBiodata($loggedInUser->user_id, $user_data))
+		// if(updateUserData($loggedInUser->user_id, 'user_biodata', json_encode($user_data)))
 			$successes[] = 'User profile has been saved.';
 		else
 			$errors[] = 'There an error to save your data. Please try again.';
 	}
 }
 
-$data = fetchUserData($loggedInUser->user_id, 'user_biodata');
+//$data = fetchUserData($loggedInUser->user_id, 'user_biodata');
+$data = getUserBiodata($loggedInUser->user_id);
 if(!$data){
 	$data = array(
 		'fullname' => '',
 		'ic_no' => '',
-		'dob' => '',
-		'email' => '',
-		'no_phone' => '',
+		'date_birth' => '',
+		'contact' => '',
 		'address' => '',
 		'city' => '',
-		'state' => ''
+		'state_id' => ''
 	);
-} else {
-	$data = json_decode($data['content'], true);
 }
 
 require_once("models/header.php"); 
 
 ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -67,16 +72,12 @@ require_once("models/header.php");
 <input name='ic_no' id="ic_no" type="text" value="<?php echo $data['ic_no']; ?>" />
 </p>
 <p>
-<label for="dob">Date of Birth:</label>
-<input name='dob' id="dob" type="text"  value="<?php echo $data['dob']; ?>"/>
+<label for="date_birth">Date of Birth:</label>
+<input name='date_birth' id="date_birth" type="text"  value="<?php echo $data['date_birth']; ?>"/>
 </p>
 <p>
-<label for="email">Email:</label>
-<input name='email' id="email" type="text" value="<?php echo $data['email']; ?>" />
-</p>
-<p>
-<label for="no_phone">Contact No.:</label>
-<input name='no_phone' id="no_phone" type="text" value="<?php echo $data['no_phone']; ?>" />
+<label for="contact">Contact No.:</label>
+<input name='contact' id="contact" type="text" value="<?php echo $data['contact']; ?>" />
 </p>
 <p>
 <label for="address">Home Address:</label>
@@ -87,10 +88,10 @@ require_once("models/header.php");
 <input name='city' id="city" type="text" value="<?php echo $data['city']; ?>" />
 </p>
 <p>
-<label for="state">State:</label>
-<select name="state" value="<?php echo $data['state']; ?>" >
-	<?php foreach($states as $state){ ?>
-	<option value="<?php echo $state; ?>"><?php echo $state; ?></option>
+<label for="state_id">State:</label>
+<select name="state_id">
+	<?php foreach($states as $index => $state){ ?>
+	<option value="<?php echo $index; ?>" <?php echo ($data['state_id'] == $index)? 'selected': ''; ?>><?php echo $state; ?></option>
 	<?php } ?>
 </select>
 </p>
@@ -110,10 +111,8 @@ require_once("models/header.php");
 		$('.nav-left li').removeClass('active');
 		$('.nav-left .biodata').addClass('active');
 		
-		$( "#dob" ).datepicker({ defaultDate: "-20y",currentText: "Now" });
-		
-		$( "#dob" ).datepicker( "setDate", "<?php echo $data['dob']; ?>" );
+		$( "#date_birth" ).datepicker({ defaultDate: "-20y",currentText: "Now", dateFormat: 'yy-mm-dd' });
+		$( "#date_birth" ).datepicker( "setDate", "<?php echo $data['date_birth']; ?>" );
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

@@ -9,7 +9,7 @@ if (!securePage($_SERVER['PHP_SELF'])){die();}
 require_once("models/header.php");
 
 ?>
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -20,8 +20,7 @@ require_once("models/header.php");
 		$('.nav-left .account').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>
 
 <?php
 /* 
@@ -45,7 +44,7 @@ echo "
 
 
 echo "
-<body>
+
 <div id='wrapper'>
 <div id='top'><div id='logo'></div></div>
 <div id='content'>
@@ -62,7 +61,6 @@ Hey, $loggedInUser->displayname. This is an example secure page designed to demo
 </div>
 <div id='bottom'></div>
 </div>
-</body>
-</html>"; */
+<?php require_once('models/footer.php'); ?>"; */
 
 ?>

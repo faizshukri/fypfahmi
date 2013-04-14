@@ -46,7 +46,7 @@ require_once("models/header.php");
 
 ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -72,8 +72,7 @@ require_once("models/header.php");
 <script type="text/javascript">
 	jQuery(document).ready(function($){
 		$('.nav-left li').removeClass('active');
-		$('.nav-left .membership').addClass('active');
+		$('.nav-left .circleassign').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

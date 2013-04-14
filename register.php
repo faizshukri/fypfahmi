@@ -98,7 +98,7 @@ require_once("models/header.php");
 
 ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -184,5 +184,4 @@ require_once("models/header.php");
 		});
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>

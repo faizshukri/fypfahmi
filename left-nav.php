@@ -28,9 +28,10 @@ foreach($perms2 as $index => $perm){
 //Links for logged in user
 if(isUserLoggedIn()) { ?>
 	<ul class="nav nav-list">
-	  <?php if ($loggedInUser->checkPermission(array(1))){ ?>
 	  <li class="nav-header">User Profile</li>
 	  <li class="biodata"><a href="user_biodata.php">Biodata</a></li>
+	  <?php if ($loggedInUser->checkPermission(array(1))){ ?>
+	  
 	  <li class="education"><a href="user_education.php">Education Background</a></li>
 	  <li class="expertise"><a href="user_expertise.php">Expertise</a></li>
 	  <li class="membership"><a href="user_membership.php">Membership</a></li>

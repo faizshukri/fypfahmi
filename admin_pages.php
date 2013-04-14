@@ -43,7 +43,7 @@ $dbpages = fetchAllPages();
 
 require_once("models/header.php"); ?>
 
-<body>
+
 <div class="container-fluid">
   <div class="row-fluid">
 	<?php include("left-nav.php"); ?>
@@ -89,5 +89,4 @@ foreach ($dbpages as $page){ ?>
 		$('.nav-left .admin-page').addClass('active');
 	});
 </script>
-</body>
-</html>
+<?php require_once('models/footer.php'); ?>
